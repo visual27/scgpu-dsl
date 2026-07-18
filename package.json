@@ -1,0 +1,179 @@
+{
+  "name": "gpu-compute-dsl",
+  "displayName": "TurboWasm GPU Compute DSL",
+  "description": "Edit TurboWasm @compute kernel DSL in VSCode. Provides syntax highlight, completion, hover, diagnostics, formatting, and copy-to-Scratch for `.scgpu` files.",
+  "version": "0.1.0",
+  "publisher": "turbowasm",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/anomalyco/scgpu-dsl.git"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "keywords": [
+    "turbowasm",
+    "scratch",
+    "gpu",
+    "webgpu",
+    "scgpu"
+  ],
+  "main": "./dist/extension.js",
+  "activationEvents": [
+    "onLanguage:gpuComputeDsl",
+    "workspaceContains:**/*.scgpu"
+  ],
+  "contributes": {
+    "languages": [
+      {
+        "id": "gpuComputeDsl",
+        "aliases": [
+          "TurboWasm GPU Compute",
+          "scgpu"
+        ],
+        "extensions": [
+          ".scgpu"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "gpuComputeDsl",
+        "scopeName": "source.gpuComputeDsl",
+        "path": "./syntaxes/gpu-compute-dsl.tmLanguage.json"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "gpuComputeDsl",
+        "path": "./snippets/gpu-compute-dsl.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "turbowasm.copyToScratch",
+        "title": "Copy DSL as Scratch Comment",
+        "category": "TurboWasm GPU"
+      },
+      {
+        "command": "turbowasm.format",
+        "title": "Format DSL Document",
+        "category": "TurboWasm GPU"
+      },
+      {
+        "command": "turbowasm.validate",
+        "title": "Validate DSL",
+        "category": "TurboWasm GPU"
+      },
+      {
+        "command": "turbowasm.insertComputeSkeleton",
+        "title": "Insert @compute Skeleton",
+        "category": "TurboWasm GPU"
+      },
+      {
+        "command": "turbowasm.copyDirective",
+        "title": "Copy directive",
+        "category": "TurboWasm GPU"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "turbowasm.copyToScratch",
+          "when": "editorLangId == gpuComputeDsl",
+          "group": "turbowasm@1"
+        },
+        {
+          "command": "turbowasm.validate",
+          "when": "editorLangId == gpuComputeDsl",
+          "group": "turbowasm@2"
+        }
+      ]
+    },
+    "keybindings": [
+      {
+        "command": "turbowasm.copyToScratch",
+        "key": "shift+alt+c",
+        "when": "editorTextFocus && editorLangId == gpuComputeDsl"
+      },
+      {
+        "command": "turbowasm.format",
+        "key": "shift+alt+f",
+        "when": "editorTextFocus && editorLangId == gpuComputeDsl"
+      },
+      {
+        "command": "turbowasm.validate",
+        "key": "shift+alt+v",
+        "when": "editorTextFocus && editorLangId == gpuComputeDsl"
+      }
+    ],
+    "configuration": {
+      "title": "TurboWasm GPU Compute DSL",
+      "properties": {
+        "turbowasm.scratchCommentPrefix": {
+          "type": "string",
+          "default": "// ",
+          "enum": ["// ", "//", ""],
+          "description": "Copy-to-Scratch で各行に付与する接頭辞。"
+        },
+        "turbowasm.enableDiagnostic": {
+          "type": "boolean",
+          "default": true,
+          "description": "DSL 構文エラーを問題パネルに出す。"
+        },
+        "turbowasm.enableHover": {
+          "type": "boolean",
+          "default": true,
+          "description": "ディレクティブのホバー説明を表示する。"
+        },
+        "turbowasm.formatter.alignedBinds": {
+          "type": "boolean",
+          "default": false,
+          "description": "@bind の縦位置を揃える。"
+        },
+        "turbowasm.formatter.normalizeLineEnding": {
+          "type": "string",
+          "enum": ["LF", "CRLF"],
+          "default": "LF",
+          "description": "Format 後の改行。"
+        },
+        "turbowasm.preset.workgroupSize": {
+          "type": "number",
+          "default": 64,
+          "minimum": 1,
+          "maximum": 256,
+          "description": "Insert Skeleton で挿入する workgroup_size。"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "node ./build.mjs",
+    "watch": "node ./build.mjs --watch",
+    "package": "vsce package",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint src --max-warnings 0",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "8.15.0",
+    "@typescript-eslint/parser": "8.15.0",
+    "@vscode/test-electron": "^2.4.0",
+    "esbuild": "^0.25.0",
+    "eslint": "8.57.1",
+    "typescript": "5.6.3",
+    "vitest": "^4.1.9",
+    "vsce": "^2.15.0"
+  },
+  "dependencies": {
+    "@turbowasm/gpu-kernel-parser": "file:../TurboWasm/packages/gpu-kernel-parser"
+  }
+}

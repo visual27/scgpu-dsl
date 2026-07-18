@@ -1,0 +1,12 @@
+---
+title: full example
+version: 1
+---
+@compute
+@bind tmp0(0) ro
+@bind buff_r(1) rw f32
+@max length=1024
+@max aabb_width=128
+@workgroup_size(64)
+@repeat R0:global_x = aabb_width, max=1024
+@map idx0 <- R0

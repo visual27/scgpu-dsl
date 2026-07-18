@@ -1,0 +1,61 @@
+{
+  "name": "gpu-compute-dsl",
+  "scopeName": "source.gpuComputeDsl",
+  "fileTypes": ["scgpu"],
+  "patterns": [
+    { "name": "comment.line.double-slash.gpuComputeDsl", "match": "//.*$" },
+    {
+      "name": "keyword.control.compute.gpuComputeDsl",
+      "match": "@\\bcompute\\b"
+    },
+    {
+      "match": "^\\s*(@)([A-Za-z_][A-Za-z0-9_]*)",
+      "captures": {
+        "1": { "name": "punctuation.definition.directive.gpuComputeDsl" },
+        "2": {
+          "name": "keyword.other.directive.gpuComputeDsl",
+          "patterns": [
+            {
+              "match": "\\b(bind|max|workgroup_size|repeat|map)\\b",
+              "captures": {
+                "1": { "name": "support.function.directive.gpuComputeDsl" }
+              }
+            }
+          ]
+        }
+      },
+      "patterns": [
+        {
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\s*(\\()\\s*(\\d+)\\s*(\\))\\s+(ro|rw)\\b",
+          "captures": {
+            "1": { "name": "variable.other.readwrite.binding.gpuComputeDsl" },
+            "2": { "name": "punctuation.paren.open.gpuComputeDsl" },
+            "3": { "name": "constant.numeric.slot.gpuComputeDsl" },
+            "4": { "name": "punctuation.paren.close.gpuComputeDsl" },
+            "5": { "name": "storage.modifier.access.gpuComputeDsl" }
+          }
+        },
+        {
+          "name": "storage.type.dtype.gpuComputeDsl",
+          "match": "\\b(f32|i32|byte)\\b"
+        },
+        {
+          "name": "constant.numeric.workgroup.gpuComputeDsl",
+          "match": "@\\bworkgroup_size\\b\\s*\\(\\s*\\d+(\\s*,\\s*\\d+){0,2}\\s*\\)"
+        },
+        {
+          "name": "constant.numeric.value.gpuComputeDsl",
+          "match": "(?<==)\\s*\\d+|(?<=max=)\\s*\\d+"
+        },
+        {
+          "name": "variable.parameter.repeat-index.gpuComputeDsl",
+          "match": "\\b([A-Za-z_][A-Za-z0-9_]*)\\b(?=\\s*[:=])"
+        },
+        {
+          "name": "keyword.operator.arrow.gpuComputeDsl",
+          "match": "<-"
+        }
+      ]
+    }
+  ]
+}

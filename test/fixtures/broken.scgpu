@@ -1,0 +1,5 @@
+@compute
+@bogus foo
+@bind tmp0(0) ro f64
+@repeat R0
+@map a <-

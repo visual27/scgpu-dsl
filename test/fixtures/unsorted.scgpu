@@ -1,0 +1,4 @@
+@compute
+@map R0 <- 0
+@repeat R0:global_x = R0 + 1
+@bind tmp0(0) ro

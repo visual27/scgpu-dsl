@@ -1,0 +1,6 @@
+@compute
+@bind tmp0(0) ro
+@bind buff(1) rw f32
+@workgroup_size(64)
+@repeat R0:global_x = R0 + 1
+@map R0 <- 0
