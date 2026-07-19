@@ -1,6 +1,6 @@
 # gpu-compute-dsl
 
-`TurboWasm` の `@compute` カーネル DSL(`.scgpu` ファイル)を VSCode 上で快適に編集するための拡張機能です。構文ハイライト・補完・ホバー・ライブ診断・整形・アウトライン・コードレンズ・ステータスバー・「Scratch コメントとしてコピー」まで、編集に必要な機能を一通り備えています。
+`TurboWasm` の `@compute` カーネル DSL(`.scgpu` ファイル)を VSCode 上で快適に編集するための拡張機能です。構文ハイライト・補完・ホバー・ライブ診断・整形・アウトライン・ステータスバー・「Scratch コメントとしてコピー」まで、編集に必要な機能を一通り備えています。
 
 この拡張機能のソースは GPL-3.0 で、[`turbowasm`](https://github.com/anomalyco/scgpu-dsl) 配下の monorepo で公開されています。
 
@@ -33,17 +33,16 @@
   - `f32` / `i32` / `byte` などの dtype
   - `@workgroup_size(x, y, z)` の数値
   - 数値リテラル / repeat-index 識別子 / `<-` 矢印演算子
-- `language-configuration.json` による**コメント・ブラケット・インデント・onEnter ルール**
+- `language-configuration.json` による**コメント・ブラケット・Enter 動作**
   - 自動閉じ括弧: `(` ↔ `)`, `[` ↔ `]`
-  - `@` で始まるディレクティブ行で **Enter 押下時に継続行インデントが自動調整**
-  - ディレクティブ行の途中で Enter すると `// TODO` コメントを自動挿入
+  - Enter 押下時に余分なインデントを付けず、新規行を 1 行だけ挿入
 
 ### 2. スニペット (`snippets/gpu-compute-dsl.json`)
 
 | プレフィックス | 展開内容 | 用途 |
 | -------------- | -------- | ---- |
-| `@compute`     | `@compute` + `// TODO` 行を挿入 | リージョン開始 |
-| `@bind ro`     | `@bind name(0) ro` | 読み取り専用バインド |
+| `@compute`     | `@compute` + 新規行を 1 行挿入 | リージョン開始 |
+| `@bind ro`     | `@bind name(0) ro f32` | 読み取り専用バインド |
 | `@bind rw`     | `@bind name(1) rw f32` | 読み書きバインド |
 | `@max`         | `@max length=1024` | サイズヒント |
 | `@workgroup_size` | `@workgroup_size(64)` | workgroup 次元 |
@@ -56,7 +55,7 @@
 
 - `@` 直後: ディレクティブ名(`@bind` / `@max` / `@workgroup_size` / `@repeat` / `@map`)を提案
 - `@bind ... (ro|rw)` まで入力した直後: dtype(`f32` / `i32` / `byte`)を提案
-- `@bind <name>`: 既存バインド名を再利用候補として提示
+- `@bind <name>`: 既存バインド名を再利用候補として提示。空白・記号を含む名前は引用符とエスケープを補って挿入
 - `@bind <name>(`: **次に空いているスロット番号**を提案
 - `@max <group>`: 既存 `@max` グループ名を提案
 - `@repeat R`: **次に空いている repeat index**(`R0`, `R1`, …)を提案
@@ -108,23 +107,16 @@ Problems パネルに以下のメッセージを **入力中リアルタイム**
   - 各ディレクティブを **bind=Variable, repeat=Function, map=Constant, max=Constant, workgroup_size=Number** として分類
   - 詳細(アクセス属性・formula・`(x, y, z)`)を detail 文字列で保持
 
-### 9. コードレンズ
-
-- 各ディレクティブ行の直上に **`📋 Copy directive`** チップを表示
-- クリックするとその行の生テキストをクリップボードへコピー
-- 編集中はキャッシュ済みの `DocumentState` を直接参照するため、編集中のファイルでも追従
-
-### 10. コピー系コマンド
+### 9. コピー系コマンド
 
 | コマンド | キーバインド | 動作 |
 | -------- | ------------ | ---- |
 | `turbowasm.copyToScratch`     | `Shift+Alt+C` | 開いている `.scgpu` 全体を **各行頭に `// `(設定可)を付けた Scratch コメント** としてクリップボードへコピー |
-| `turbowasm.copyDirective`     | コードレンズ  | 指定行のディレクティブ生テキストのみコピー |
 | `turbowasm.format`            | `Shift+Alt+F` | ドキュメント整形 |
 | `turbowasm.validate`          | `Shift+Alt+V` | 現在の Problems 件数を再計算してメッセージ表示 |
 | `turbowasm.insertComputeSkeleton` | (コマンドパレット) | カーソル位置に **最小スケルトン** を挿入(`@workgroup_size` の値は `turbowasm.preset.workgroupSize`) |
 
-### 11. 拡張機能のライフサイクル
+### 10. 拡張機能のライフサイクル
 
 - **アクティベーション契機**(`package.json`):
   - `onLanguage:gpuComputeDsl` — `.scgpu` を開いた瞬間
@@ -139,11 +131,11 @@ Problems パネルに以下のメッセージを **入力中リアルタイム**
 | ディレクティブ        | 形式                                                                | 役割 |
 | --------------------- | ------------------------------------------------------------------- | ---- |
 | `@compute`            | (単独行)                                                            | リージョン開始マーカー |
-| `@bind`               | `@bind <name>(<slot>) (ro\|rw) [f32\|i32\|byte]`                    | バッファ宣言。dtype 省略時は `f32` |
+| `@bind`               | `@bind <name>(<slot>) (ro\|rw) [f32\|i32\|byte]`                    | バッファ宣言。空白・記号を含む名前は二重引用符で囲む。dtype 省略時は `f32` |
 | `@max`                | `@max <group>=<uint>`                                               | 静的サイズヒント(Emitter は読まない / ドキュメント用途) |
 | `@workgroup_size`     | `@workgroup_size(x[, y[, z]])`                                      | workgroup 次元。各値は 1 以上、デフォルト `(64, 1, 1)` |
 | `@repeat`             | `@repeat R<i>[:<axis>] = <formula>[, max=<uint>]`                   | リピートループ宣言。対応する `@map` が必須 |
-| `@map`                | `@map <var> <- <formula>`                                           | WGSL `let` 相当。formula は WGSL 予約語を避けた形に書き換えられることがある |
+| `@map`                | `@map <var> <- <formula>`                                           | WGSL `let` 相当。空白・記号を含む名前は二重引用符で囲む。formula は WGSL 予約語を避けた形に書き換えられることがある |
 
 **軸トークン**:
 - パラレル: `global_x` / `global_y` / `global_z` / `local_x` / `local_y` / `local_z` / `workgroup_x` / `workgroup_y` / `workgroup_z`
@@ -196,11 +188,9 @@ Problems パネルに以下のメッセージを **入力中リアルタイム**
 │       ├─ registerFormatter
 │       ├─ registerSymbols
 │       ├─ registerStatusBar
-│       ├─ registerCodeLens
 │       ├─ registerCopyToScratchCommand
 │       ├─ registerInsertSkeletonCommand
-│       ├─ registerValidateCommand
-│       └─ registerCopyDirectiveCommand
+│       └─ registerValidateCommand
 │
 └─ 各プロバイダは DocumentStateCache(URI キー)のみ参照。
    キャッシュにヒットすればパース不要、ヒットしなければ priming を待つ。

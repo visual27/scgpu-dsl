@@ -97,7 +97,7 @@ function directiveSymbol(
     case 'max': {
       const d = directive as MaxDirective;
       return new vscode.DocumentSymbol(
-        `@max ${d.groupName}`,
+        `@max ${d.name}`,
         `= ${d.value}`,
         vscode.SymbolKind.Constant,
         vsRange,

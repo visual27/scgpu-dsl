@@ -1,17 +1,17 @@
 {
   "@compute": {
     "prefix": "@compute",
-    "body": ["@compute", "${1:// TODO}", "$0"],
+    "body": ["@compute", "$0"],
     "description": "@compute marker — region entry"
   },
   "@bind ro": {
     "prefix": "@bind ro",
-    "body": ["@bind ${1:name}(${2:0}) ro"],
+    "body": ["@bind \"${1}\"(${2:0}) ro f32"],
     "description": "@bind name(slot) ro f32 (default dtype)"
   },
   "@bind rw": {
     "prefix": "@bind rw",
-    "body": ["@bind ${1:name}(${2:1}) rw f32"],
+    "body": ["@bind \"${1}\"(${2:1}) rw f32"],
     "description": "@bind name(slot) rw f32"
   },
   "@max": {
@@ -36,18 +36,18 @@
   },
   "@map": {
     "prefix": "@map",
-    "body": ["@map ${1:R0} <- ${2:0}"],
+    "body": ["@map ${1:\"\"} <- ${2:0}"],
     "description": "@map var <- formula"
   },
   "kernel skeleton": {
     "prefix": "skel",
     "body": [
       "@compute",
-      "@bind ${1:tmp0}(0) ro",
-      "@bind ${2:buff}(1) rw f32",
+      "@bind \"${1}\"(0) ro",
+      "@bind \"${2}\"(1) rw f32",
       "@workgroup_size(${3:64})",
-      "@repeat ${4:R0}:global_x = ${5:R0 + 1}",
-      "@map ${4:R0} <- 0",
+      "@repeat ${4:R0}:global_x = ${4:R0 + 1}",
+      "@map ${5:\"\"} <- 0",
       "$0"
     ],
     "description": "Minimum runnable skeleton"

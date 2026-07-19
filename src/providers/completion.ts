@@ -15,7 +15,6 @@ import {
   KNOWN_AXES,
   SEQUENTIAL_AXIS,
   type BindDirective,
-  type DocumentDirective,
 } from '@turbowasm/gpu-kernel-parser';
 
 const TRIGGER_CHARS = ['@', '(', ',', '<', ':', ' '];
@@ -46,25 +45,25 @@ export function buildCompletionItems(
   const before = lineText.slice(0, position.character);
 
   if (before.match(/^\s*@$/)) {
-    return directiveHeadItems();
+    return directiveHeadItems(position, before);
   }
-  if (before.match(/^\s*@bind\s+\S*\(\s*\d*\s*\)\s+(ro|rw)\s*$/i)) {
+  if (before.match(/^\s*@bind\s+(?:"[^"\\]*(?:\\.[^"\\]*)*"|[A-Za-z_][A-Za-z0-9_]*)\s*\(\s*\d*\s*\)\s+(ro|rw)\s*$/i)) {
     return dtypeItems();
   }
-  if (before.match(/^\s*@bind\s+\S*$/i) && state) {
-    return bindingNameItems(state);
+  if (before.match(/^\s*@bind\s+(?:"(?:\\.|[^"\\])*|[A-Za-z_][A-Za-z0-9_]*)?$/i) && state) {
+    return bindingNameItems(state, position, before);
   }
-  if (before.match(/^\s*@bind\s+\S*\($/i)) {
+  if (before.match(/^\s*@bind\s+(?:"[^"\\]*(?:\\.[^"\\]*)*"|[A-Za-z_][A-Za-z0-9_]*)\s*\($/i)) {
     return slotItem(state);
   }
   if (before.match(/^\s*@max\s+\S*$/i) && state) {
     return maxGroupItems(state);
   }
-  if (before.match(/^\s*@repeat\s+\S*$/i)) {
-    return repeatNameItems(state);
-  }
   if (before.match(/^\s*@repeat\s+\S+:\s*\S*$/i)) {
     return axisItems();
+  }
+  if (before.match(/^\s*@repeat\s+\S*$/i)) {
+    return repeatNameItems(state);
   }
   if (before.match(/^\s*@map\s+\S*$/i) && state) {
     return mapVarItems(state);
@@ -73,18 +72,28 @@ export function buildCompletionItems(
   // Generic fallback: suggest directive heads if the cursor is on a
   // bare `@` or near one.
   if (/@\w*$/.test(before)) {
-    return directiveHeadItems();
+    return directiveHeadItems(position, before);
   }
 
   return [];
 }
 
-function directiveHeadItems(): vscode.CompletionItem[] {
+function directiveHeadItems(
+  position: vscode.Position,
+  before: string,
+): vscode.CompletionItem[] {
+  const token = before.match(/@\w*$/)?.[0] ?? '';
+  const range = new vscode.Range(
+    position.line,
+    position.character - token.length,
+    position.line,
+    position.character,
+  );
   return DIRECTIVE_HEADS.map((name) => {
     const item = new vscode.CompletionItem(`@${name}`, vscode.CompletionItemKind.Keyword);
     item.detail = `TurboWasm directive`;
     item.insertText = `@${name}`;
-    item.command = { command: 'editor.action.triggerSuggest', title: 'Suggest' };
+    item.range = range;
     return item;
   });
 }
@@ -97,33 +106,67 @@ function dtypeItems(): vscode.CompletionItem[] {
   });
 }
 
-function bindingNameItems(state: DocumentState): vscode.CompletionItem[] {
+function bindingNameItems(
+  state: DocumentState,
+  position: vscode.Position,
+  before: string,
+): vscode.CompletionItem[] {
+  const tokenStart = before.match(/^\s*@bind\s+/)?.[0].length ?? position.character;
+  const range = new vscode.Range(
+    position.line,
+    tokenStart,
+    position.line,
+    position.character,
+  );
+  // Detect whether the user has typed anything after `@bind `. When
+  // the slot is empty we lead with a "new quoted binding" suggestion
+  // so the cursor lands between the empty quotes immediately.
+  const namePart = before.match(/^\s*@bind\s+([^\s]*)$/i)?.[1] ?? '';
+  const isEmpty = namePart.length === 0;
+
   const seen = new Set<string>();
   for (const d of state.directives) {
     if (d.directive.kind === 'bind') {
       seen.add((d.directive as BindDirective).name);
     }
   }
-  return [...seen].map((name) => {
+
+  const items: vscode.CompletionItem[] = [];
+
+  if (isEmpty) {
+    const newItem = new vscode.CompletionItem('""  new quoted binding', vscode.CompletionItemKind.Variable);
+    newItem.detail = 'new quoted binding';
+    newItem.documentation = 'Insert an empty quoted name; the cursor lands between the quotes.';
+    newItem.insertText = new vscode.SnippetString('"$1"');
+    newItem.range = range;
+    newItem.sortText = '\0';
+    items.push(newItem);
+  }
+
+  for (const name of seen) {
     const item = new vscode.CompletionItem(name, vscode.CompletionItemKind.Variable);
     item.detail = 'existing binding';
-    return item;
-  });
+    item.insertText = formatNameToken(name);
+    item.range = range;
+    items.push(item);
+  }
+
+  return items;
 }
 
 function slotItem(state: DocumentState | undefined): vscode.CompletionItem[] {
-  let maxSlot = -1;
+  const used = new Set<number>();
   if (state) {
     for (const d of state.directives) {
       if (d.directive.kind === 'bind') {
-        const slot = (d.directive as BindDirective).slot;
-        if (slot > maxSlot) maxSlot = slot;
+        used.add((d.directive as BindDirective).slot);
       }
     }
   }
-  const next = maxSlot + 1;
+  let next = 0;
+  while (used.has(next)) next += 1;
   const item = new vscode.CompletionItem(String(next), vscode.CompletionItemKind.Value);
-  item.detail = 'next slot';
+  item.detail = 'smallest available slot';
   item.insertText = String(next);
   return [item];
 }
@@ -132,7 +175,7 @@ function maxGroupItems(state: DocumentState): vscode.CompletionItem[] {
   const seen = new Set<string>();
   for (const d of state.directives) {
     if (d.directive.kind === 'max') {
-      seen.add(d.directive.groupName);
+      seen.add(d.directive.name);
     }
   }
   return [...seen].map((name) => {
@@ -183,14 +226,7 @@ function mapVarItems(state: DocumentState): vscode.CompletionItem[] {
   });
 }
 
-export function directiveAtLine(
-  state: DocumentState,
-  line: number,
-): DocumentDirective | undefined {
-  for (const region of state.regions) {
-    for (const d of region.directives) {
-      if (d.range.start.line === line) return d;
-    }
-  }
-  return undefined;
+function formatNameToken(name: string): string {
+  if (/^[A-Za-z_][A-Za-z0-9_]*$/.test(name)) return name;
+  return `"${name.replace(/\\/g, '\\\\').replace(/"/g, '\\"')}"`;
 }

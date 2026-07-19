@@ -1,7 +1,7 @@
 /**
  * URI-keyed cache that maps an open document to its most-recently-parsed
- * directive state. Providers and UI elements (status bar, code lens) all
- * read from this cache; the editor event listener refreshes it.
+ * directive state. Providers and UI elements (status bar) all read from
+ * this cache; the editor event listener refreshes it.
  *
  * The cache is intentionally simple — it stores plain serialisable
  * values so it survives `JSON.stringify` round-trips for debugging or

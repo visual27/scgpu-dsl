@@ -11,22 +11,46 @@ export interface SkeletonTemplate {
   lines: string[];
 }
 
-export function buildSkeleton(workgroupSize: number = DEFAULT_WORKGROUP_SIZE): SkeletonTemplate {
+export function buildSkeleton(
+  workgroupSize: number = DEFAULT_WORKGROUP_SIZE,
+  existingSlots: readonly number[] = [],
+): SkeletonTemplate {
   const wg = clampWorkgroupSize(workgroupSize);
+  const first = smallestAvailableSlot(existingSlots);
+  const second = smallestAvailableSlot([...existingSlots, first]);
   return {
     lines: [
       '@compute',
-      `@bind tmp0(0) ro`,
-      `@bind buff(1) rw f32`,
+      `@bind ""(${first}) ro`,
+      `@bind ""(${second}) rw f32`,
       `@workgroup_size(${wg})`,
       `@repeat R0:global_x = R0 + 1`,
-      `@map R0 <- 0`,
+      `@map "" <- 0`,
     ],
   };
 }
 
-export function skeletonToString(workgroupSize: number = DEFAULT_WORKGROUP_SIZE): string {
-  return buildSkeleton(workgroupSize).lines.join('\n');
+export function skeletonToString(
+  workgroupSize: number = DEFAULT_WORKGROUP_SIZE,
+  existingSlots: readonly number[] = [],
+): string {
+  return buildSkeleton(workgroupSize, existingSlots).lines.join('\n');
+}
+
+/**
+ * Return the smallest non-negative integer that is not present in
+ * `used`. Gap-filling semantics: `{0,1,2,5,6}` → `3`. Negative or
+ * non-integer entries in `used` are ignored so the helper stays
+ * tolerant of partially-parsed directives.
+ */
+export function smallestAvailableSlot(used: readonly number[]): number {
+  const seen = new Set<number>();
+  for (const slot of used) {
+    if (Number.isInteger(slot) && slot >= 0) seen.add(slot);
+  }
+  let next = 0;
+  while (seen.has(next)) next += 1;
+  return next;
 }
 
 function clampWorkgroupSize(value: number): number {

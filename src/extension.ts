@@ -21,12 +21,10 @@ import { registerHover } from './providers/hover';
 import { registerFormatter } from './providers/format';
 import { registerSymbols } from './providers/symbols';
 import { registerStatusBar } from './ui/statusBar';
-import { registerCodeLens } from './ui/codeLens';
 
 import { registerCopyToScratchCommand } from './commands/copyToScratch';
 import { registerInsertSkeletonCommand } from './commands/insertTemplate';
 import { registerValidateCommand } from './commands/validate';
-import { registerCopyDirectiveCommand } from './commands/copyDirective';
 
 const DEBOUNCE_MS = 250;
 
@@ -73,13 +71,11 @@ export function activate(context: vscode.ExtensionContext): void {
   context.subscriptions.push(registerFormatter(context, getConfig));
   context.subscriptions.push(registerSymbols(cache));
   context.subscriptions.push(registerStatusBar(cache));
-  context.subscriptions.push(registerCodeLens(cache));
 
   // Commands.
   context.subscriptions.push(registerCopyToScratchCommand(context, getConfig));
-  context.subscriptions.push(registerInsertSkeletonCommand(context, getConfig));
+  context.subscriptions.push(registerInsertSkeletonCommand(context, getConfig, cache));
   context.subscriptions.push(registerValidateCommand(context, cache));
-  context.subscriptions.push(registerCopyDirectiveCommand(context, cache));
 
   // Touch unused symbol so eslint does not flag the import on
   // environments where the formatter is the only consumer.

@@ -4,6 +4,5 @@
 
 - Initial release of the `gpu-compute-dsl` VSCode extension.
 - Syntax highlighting, completion, hover, diagnostics, formatting,
-  outline, code lens, status bar, and Copy-as-Scratch-comment
-  integration.
+  outline, status bar, and Copy-as-Scratch-comment integration.
 - Reuses parser logic from `@turbowasm/gpu-kernel-parser`.

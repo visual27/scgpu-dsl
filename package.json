@@ -74,11 +74,6 @@
         "command": "turbowasm.insertComputeSkeleton",
         "title": "Insert @compute Skeleton",
         "category": "TurboWasm GPU"
-      },
-      {
-        "command": "turbowasm.copyDirective",
-        "title": "Copy directive",
-        "category": "TurboWasm GPU"
       }
     ],
     "menus": {
@@ -175,5 +170,14 @@
   },
   "dependencies": {
     "@turbowasm/gpu-kernel-parser": "file:../TurboWasm/packages/gpu-kernel-parser"
+  },
+  "overrides": {
+    "vsce": {
+      "markdown-it": "^14.1.2",
+      "xml2js": "^0.5.0"
+    },
+    "markdown-it": {
+      "linkify-it": "^5.0.1"
+    }
   }
 }

@@ -12,16 +12,11 @@
     { "open": "(", "close": ")" },
     { "open": "[", "close": "]" }
   ],
-  "indentationRules": {
-    "increaseIndentPattern": "^\\s*@\\w+\\b(?=.*$)",
-    "decreaseIndentPattern": "^\\s*@(?!\\w+\\b).*$",
-    "indentNextLinePattern": "^\\s*@(?!compute$).*$"
-  },
   "onEnterRules": [
     {
       "beforeText": "^\\s*@\\w+\\s.*$",
       "afterText": "^\\s*$",
-      "action": { "indent": "none", "appendText": "\n" }
+      "action": { "indent": "none" }
     }
   ],
   "wordPattern": "[A-Za-z_][A-Za-z0-9_]*"
